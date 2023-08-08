@@ -1,20 +1,6 @@
-/* extension.js
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * SPDX-License-Identifier: GPL-2.0-or-later
- */
+// This extensions shows USD to TRY convertion on Gnome panel.
+//Copyright (C) 2023  arfiesat
+// See LICENSE file
 
 'use strict';
 
@@ -82,7 +68,7 @@ async function handle_request_dollar_api() {
 
         // Create body of Soup request
         let message = Soup.Message.new_from_encoded_form(
-            "GET", "https://economia.awesomeapi.com.br/last/USD-PKR", Soup.form_encode_hash({}));
+            "GET", "https://economia.awesomeapi.com.br/last/USD-TRY", Soup.form_encode_hash({}));
 
         // Send Soup request to API Server
         await session.send_and_read_async(message, GLib.PRIORITY_DEFAULT, null, (_, r0) => {
@@ -91,14 +77,14 @@ async function handle_request_dollar_api() {
             const body_response = JSON.parse(response);
 
             // Get the value of Dollar Quotation
-            dollarQuotation = body_response["USDPKR"]["bid"];
+            dollarQuotation = body_response["USDTRY"]["bid"];
             dollarQuotation = dollarQuotation.split(".");
             dollarQuotation = dollarQuotation[0] + "," + dollarQuotation[1].substring(0, 2);
 
             // Sext text in Widget
             panelButtonText = new St.Label({
             style_class : "cPanelText",
-                text: "(1 USD = " + dollarQuotation + " PKR)",
+                text: "(1 USD = " + dollarQuotation + " TRY)",
                 y_align: Clutter.ActorAlign.CENTER,
             });
             panelButton.set_child(panelButtonText);
