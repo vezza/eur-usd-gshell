@@ -91,9 +91,7 @@ async function handle_request_dollar_api() {
             response = undefined;
         });
     } catch (error) {
-        ```js
         console.error(`Traceback Error in [handle_request_dollar_api]: ${error}`);
-        ```
         panelButtonText = new St.Label({
             text: "(1 USD = " + _dollarQuotation + ")" + " * ",
             y_align: Clutter.ActorAlign.CENTER,
