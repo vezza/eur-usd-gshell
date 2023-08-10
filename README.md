@@ -11,6 +11,10 @@ See LICENSE File
 # How to install
 ```
 
+Download via Gnome Extension Store: https://extensions.gnome.org/extension/6192/usd-try/
+
+or
+
 cd /tmp && git clone https://github.com/arifesat/USD-TRY-GShell.git && mv USD-TRY-Gshell usd-try-gshell@arifesat.github.com && cp -av usd-try-gshell@arifesat.github.com ~/.local/share/gnome-shell/extensions/ && gnome-shell-extension-tool --enable-extension usd-try-gshell@arifesat.github.com && rm -rf usd-try-gshell@arifesat.github.com
 
 

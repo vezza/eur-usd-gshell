@@ -18,13 +18,10 @@ let dollarQuotation;
 let sourceId = null;
 
 // Start application
-function init() {
-    log(`initializing ${Me.metadata.name}`);
-}
+function init() {}
 
 // Add the button to the panel
 function enable() {
-    log(`enabling ${Me.metadata.name}`);
     panelButton = new St.Bin({
         style_class: "panel-button",
     });
@@ -39,7 +36,6 @@ function enable() {
 
 // Remove the added button from panel
 function disable() {
-    log(`disabling ${Me.metadata.name}`);
     Main.panel._centerBox.remove_child(panelButton);
 
     if (panelButton) {
@@ -95,7 +91,9 @@ async function handle_request_dollar_api() {
             response = undefined;
         });
     } catch (error) {
-        log(`Traceback Error in [handle_request_dollar_api]: ${error}`);
+        ```js
+        console.error(`Traceback Error in [handle_request_dollar_api]: ${error}`);
+        ```
         panelButtonText = new St.Label({
             text: "(1 USD = " + _dollarQuotation + ")" + " * ",
             y_align: Clutter.ActorAlign.CENTER,
