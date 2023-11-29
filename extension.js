@@ -10,16 +10,11 @@ import ExtensionUtils from 'resource:///org/gnome/shell/misc/ExtensionUtils.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import PanelMenu from 'resource:///org/gnome/shell/ui/PanelMenu';
 
-const Me = ExtensionUtils.getCurrentExtension();
-
 let panelButton;
 let panelButtonText;
 let session;
 let dollarQuotation;
 let sourceId = null;
-
-// Start application
-function init() {}
 
 // Add the button to the panel
 function enable() {
