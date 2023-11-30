@@ -4,51 +4,19 @@
 
 'use strict';
 
-import { St, Gio, Clutter, Soup, GLib } from gi;
+import St from 'gi://St'
+import Gio from 'gi://Gio'
+import Clutter from 'gi://Clutter'
+import Soup from 'gi://Soup'
+import GLib from 'gi://GLib'
 
-import ExtensionUtils from 'resource:///org/gnome/shell/misc/ExtensionUtils.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import PanelMenu from 'resource:///org/gnome/shell/ui/PanelMenu';
 
 let panelButton;
 let panelButtonText;
 let session;
 let dollarQuotation;
 let sourceId = null;
-
-// Add the button to the panel
-function enable() {
-    panelButton = new St.Bin({
-        style_class: "panel-button",
-    });
-
-    handle_request_dollar_api();
-    Main.panel._centerBox.insert_child_at_index(panelButton, 0);
-    sourceId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 30, () => {
-        handle_request_dollar_api();
-        return GLib.SOURCE_CONTINUE;
-    });
-}
-
-// Remove the added button from panel
-function disable() {
-    Main.panel._centerBox.remove_child(panelButton);
-
-    if (panelButton) {
-        panelButton.destroy();
-        panelButton = null;
-    }
-
-    if (sourceId) {
-        GLib.Source.remove(sourceId);
-        sourceId = null;
-    }
-    
-    if (session) {
-        session.abort(session);
-        session = null;
-    }
-}
 
 // Handle Requests API Dollar
 async function handle_request_dollar_api() {
@@ -94,5 +62,39 @@ async function handle_request_dollar_api() {
         });
         panelButton.set_child(panelButtonText);
         session.abort();
+    }
+}
+
+export default class Extension {
+    enable() {
+        panelButton = new St.Bin({
+            style_class: "panel-button",
+        });
+    
+        handle_request_dollar_api();
+        Main.panel._centerBox.insert_child_at_index(panelButton, 0);
+        sourceId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 30, () => {
+            handle_request_dollar_api();
+            return GLib.SOURCE_CONTINUE;
+        });
+    }
+
+    disable() {
+        Main.panel._centerBox.remove_child(panelButton);
+
+        if (panelButton) {
+            panelButton.destroy();
+            panelButton = null;
+        }
+    
+        if (sourceId) {
+            GLib.Source.remove(sourceId);
+            sourceId = null;
+        }
+        
+        if (session) {
+            session.abort(session);
+            session = null;
+        }
     }
 }
