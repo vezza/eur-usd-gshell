@@ -1,4 +1,4 @@
-// This extensions shows USD to TRY convertion on Gnome panel.
+// This extensions shows EUR to USD convertion on Gnome panel.
 //Copyright (C) 2023  arfiesat
 // See LICENSE file
 
@@ -19,7 +19,7 @@ let dollarQuotation;
 let sourceId = null;
 
 // Handle Requests API Dollar
-async function handle_request_dollar_api() {
+async function handle_request_euro_api() {
     try {
         // Create a new Soup Session
         if (!session) {
@@ -28,7 +28,7 @@ async function handle_request_dollar_api() {
 
         // Create body of Soup request
         let message = Soup.Message.new_from_encoded_form(
-            "GET", "https://economia.awesomeapi.com.br/last/USD-TRY", Soup.form_encode_hash({}));
+            "GET", "https://economia.awesomeapi.com.br/last/EUR-USD", Soup.form_encode_hash({}));
 
         // Send Soup request to API Server
         await session.send_and_read_async(message, GLib.PRIORITY_DEFAULT, null, (_, r0) => {
@@ -36,15 +36,15 @@ async function handle_request_dollar_api() {
             let response = new TextDecoder().decode(text.get_data());
             const body_response = JSON.parse(response);
 
-            // Get the value of Dollar Quotation
-            dollarQuotation = body_response["USDTRY"]["bid"];
-            dollarQuotation = dollarQuotation.split(".");
-            dollarQuotation = dollarQuotation[0] + "," + dollarQuotation[1].substring(0, 2);
+            // Get the value of Euro Quotation
+            euroQuotation = body_response["EURUSD"]["bid"];
+            euroQuotation = euroQuotation.split(".");
+            euroQuotation = euroQuotation[0] + "," + euroQuotation[1].substring(0, 2);
 
             // Sext text in Widget
             panelButtonText = new St.Label({
             style_class : "cPanelText",
-                text: "(1 USD = " + dollarQuotation + " TRY)",
+                text: "(1 EUR = " + euroQuotation + " USD)",
                 y_align: Clutter.ActorAlign.CENTER,
             });
             panelButton.set_child(panelButtonText);
@@ -55,9 +55,9 @@ async function handle_request_dollar_api() {
             response = undefined;
         });
     } catch (error) {
-        console.error(`Traceback Error in [handle_request_dollar_api]: ${error}`);
+        console.error(`Traceback Error in [handle_request_euro_api]: ${error}`);
         panelButtonText = new St.Label({
-            text: "(1 USD = " + _dollarQuotation + ")" + " * ",
+            text: "(1 EUR = " + _euroQuotation + ")" + " * ",
             y_align: Clutter.ActorAlign.CENTER,
         });
         panelButton.set_child(panelButtonText);
@@ -71,10 +71,10 @@ export default class Extension {
             style_class: "panel-button",
         });
     
-        handle_request_dollar_api();
+        handle_request_euro_api();
         Main.panel._centerBox.insert_child_at_index(panelButton, 0);
         sourceId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 30, () => {
-            handle_request_dollar_api();
+            handle_request_euro_api();
             return GLib.SOURCE_CONTINUE;
         });
     }
