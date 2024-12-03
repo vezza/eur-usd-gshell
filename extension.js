@@ -1,5 +1,5 @@
 // This extensions shows EUR to USD convertion on Gnome panel.
-//Copyright (C) 2023  arfiesat
+// Copyright (C) 2024 vezza
 // See LICENSE file
 
 'use strict';
@@ -15,7 +15,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 let panelButton;
 let panelButtonText;
 let session;
-let dollarQuotation;
+let euroQuotation;
 let sourceId = null;
 
 // Handle Requests API Dollar
