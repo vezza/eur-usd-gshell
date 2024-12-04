@@ -39,7 +39,7 @@ async function handle_request_euro_api() {
             // Get the value of Euro Quotation
             euroQuotation = body_response["EURUSD"]["bid"];
             euroQuotation = euroQuotation.split(".");
-            euroQuotation = euroQuotation[0] + "," + euroQuotation[1].substring(0, 2);
+            euroQuotation = euroQuotation[0] + "," + euroQuotation[1].substring(0, 5);
 
             // Sext text in Widget
             panelButtonText = new St.Label({
