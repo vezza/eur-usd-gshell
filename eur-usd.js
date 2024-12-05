@@ -65,7 +65,7 @@ async function handle_request_euro_api() {
     }
 }
 
-export default class Extension {
+export default class eurusd {
     enable() {
         panelButton = new St.Bin({
             style_class: "panel-button",
@@ -81,10 +81,12 @@ export default class Extension {
 
     disable() {
         Main.panel._centerBox.remove_child(panelButton);
-
+        
         if (panelButton) {
             panelButton.destroy();
             panelButton = null;
+            panelButtonText = null;
+            euroQuotation = null;
         }
     
         if (sourceId) {
