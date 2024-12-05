@@ -65,7 +65,7 @@ async function handle_request_euro_api() {
     }
 }
 
-export default class eurusd {
+export default class Eurusd {
     enable() {
         panelButton = new St.Bin({
             style_class: "panel-button",
