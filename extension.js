@@ -85,10 +85,10 @@ export default class Eurusd {
         if (panelButton) {
             panelButton.destroy();
             panelButton = null;
-            panelButtonText = null;
-            euroQuotation = null;
         }
-    
+        panelButtonText = null;
+        euroQuotation = null;
+        
         if (sourceId) {
             GLib.Source.remove(sourceId);
             sourceId = null;
