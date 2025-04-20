@@ -1,6 +1,6 @@
 # EUR-USD
 ```
-Gnome-Shell v.(3.38, 40, 41, 42, 43, 44, 45, 46, 47) Extension, for conversion of USD to TRY on the center of the top panel.
+Gnome-Shell v.(3.38, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50) Extension, for conversion of USD to TRY on the center of the top panel.
 ```
 This extension is a modified version of https://github.com/arifesat/USD-TRY-GShell extension to show EUR to USD instead of USD to TRY. 
 ```
