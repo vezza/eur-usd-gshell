@@ -4,64 +4,129 @@
 
 'use strict';
 
-import St from 'gi://St'
-import Gio from 'gi://Gio'
-import Clutter from 'gi://Clutter'
-import Soup from 'gi://Soup'
-import GLib from 'gi://GLib'
+import St from 'gi://St';
+import Gio from 'gi://Gio';
+import Clutter from 'gi://Clutter';
+import Soup from 'gi://Soup';
+import GLib from 'gi://GLib';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 let panelButton;
 let panelButtonText;
 let session;
-let euroQuotation;
 let sourceId = null;
+let euroQuotation = null;
+let currentApiIndex = 0;
+
+// Lista di API alternative per il tasso di cambio
+const exchangeApis = [
+    {
+        name: 'Frankfurter',
+        url: 'https://api.frankfurter.app/latest?from=EUR&to=USD',
+        parser: (data) => data.rates?.USD
+    },
+    {
+        name: 'ExchangeRate-API',
+        url: 'https://api.exchangerate-api.com/v4/latest/EUR',
+        parser: (data) => data.rates?.USD
+    },
+    {
+        name: 'AwesomeAPI',
+        url: 'https://economia.awesomeapi.com.br/last/EUR-USD',
+        parser: (data) => data.EURUSD?.bid
+    }
+];
 
 // Handle Requests API Dollar
 async function handle_request_euro_api() {
     try {
         // Create a new Soup Session
         if (!session) {
-            session = new Soup.Session({ timeout: 10 });
+            session = new Soup.Session({ 
+                timeout: 10,
+                user_agent: 'Gnome-Shell-Extension/1.0'
+            });
         }
 
-        // Create body of Soup request
-        let message = Soup.Message.new_from_encoded_form(
-            "GET", "https://economia.awesomeapi.com.br/last/EUR-USD", Soup.form_encode_hash({}));
-
+        const currentApi = exchangeApis[currentApiIndex];
+        console.log(`Using API: ${currentApi.name}`);
+        
+        let message = Soup.Message.new('GET', currentApi.url);
+        
         // Send Soup request to API Server
-        await session.send_and_read_async(message, GLib.PRIORITY_DEFAULT, null, (_, r0) => {
-            let text = session.send_and_read_finish(r0);
-            let response = new TextDecoder().decode(text.get_data());
-            const body_response = JSON.parse(response);
+        await session.send_and_read_async(message, GLib.PRIORITY_DEFAULT, null, (_, result) => {
+            try {
+                let response = session.send_and_read_finish(result);
+                let text = new TextDecoder().decode(response.get_data());
+                console.log(`API ${currentApi.name} Response:`, text);
+                
+                const body_response = JSON.parse(text);
 
-            // Get the value of Euro Quotation
-            euroQuotation = body_response["EURUSD"]["bid"];
-            euroQuotation = euroQuotation.split(".");
-            euroQuotation = euroQuotation[0] + "," + euroQuotation[1].substring(0, 4);
+                // Verifica se c'è un errore di quota
+                if (body_response.status === 429 || body_response.code === 'QuotaExceeded') {
+                    throw new Error(`Quota exceeded for ${currentApi.name}`);
+                }
 
-            // Sext text in Widget
-            panelButtonText = new St.Label({
-            style_class : "cPanelText",
-                text: "(1 EUR = " + euroQuotation + " USD)",
-                y_align: Clutter.ActorAlign.CENTER,
-            });
-            panelButton.set_child(panelButtonText);
+                // Parsing dei dati con il parser specifico dell'API
+                const rate = currentApi.parser(body_response);
+                
+                if (rate) {
+                    let rateValue = rate.toString();
+                    let rateParts = rateValue.split(".");
+                    euroQuotation = rateParts[0] + "," + (rateParts[1] ? rateParts[1].substring(0, 4) : "0000");
 
-            // Finish Soup Session
-            session.abort();
-            text = undefined;
-            response = undefined;
+                    updatePanelText("(1 EUR = " + euroQuotation + " USD)");
+                    console.log(`Successfully got rate from ${currentApi.name}: ${euroQuotation}`);
+                } else {
+                    throw new Error(`Invalid data from ${currentApi.name}`);
+                }
+
+            } catch (parseError) {
+                console.error(`Error with ${currentApi.name}:`, parseError);
+                
+                // Prova l'API successiva
+                currentApiIndex = (currentApiIndex + 1) % exchangeApis.length;
+                
+                if (currentApiIndex === 0) {
+                    // Se abbiamo provato tutte le API, mostra errore
+                    updatePanelText("(API Limit)");
+                } else {
+                    // Ritenta immediatamente con la prossima API
+                    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, () => {
+                        handle_request_euro_api();
+                        return GLib.SOURCE_REMOVE;
+                    });
+                }
+            }
         });
     } catch (error) {
         console.error(`Traceback Error in [handle_request_euro_api]: ${error}`);
+        updatePanelText("(Network Error)");
+        
+        // Ritenta dopo 30 secondi
+        GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 30, () => {
+            handle_request_euro_api();
+            return GLib.SOURCE_REMOVE;
+        });
+    }
+}
+
+// Funzione helper per aggiornare il testo
+function updatePanelText(text) {
+    if (panelButton) {
+        let oldChild = panelButton.get_child();
+        if (oldChild) {
+            oldChild.destroy();
+        }
+        
         panelButtonText = new St.Label({
-            text: "(1 EUR = " + _euroQuotation + ")" + " * ",
+            style_class: "cPanelText",
+            text: text,
             y_align: Clutter.ActorAlign.CENTER,
         });
+        
         panelButton.set_child(panelButtonText);
-        session.abort();
     }
 }
 
@@ -70,24 +135,32 @@ export default class Eurusd {
         panelButton = new St.Bin({
             style_class: "panel-button",
         });
-    
-        handle_request_euro_api();
+
+        // Text iniziale
+        updatePanelText("(Loading...)");
+
         Main.panel._centerBox.insert_child_at_index(panelButton, 0);
-        sourceId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 30, () => {
+        
+        // Prima chiamata immediata
+        handle_request_euro_api();
+        
+        // Aggiornamento periodico ogni 60 secondi (ridotto per evitare limiti)
+        sourceId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 60, () => {
             handle_request_euro_api();
             return GLib.SOURCE_CONTINUE;
         });
     }
 
     disable() {
-        Main.panel._centerBox.remove_child(panelButton);
-        
         if (panelButton) {
+            Main.panel._centerBox.remove_child(panelButton);
             panelButton.destroy();
             panelButton = null;
         }
+        
         panelButtonText = null;
         euroQuotation = null;
+        currentApiIndex = 0;
         
         if (sourceId) {
             GLib.Source.remove(sourceId);
@@ -95,7 +168,7 @@ export default class Eurusd {
         }
         
         if (session) {
-            session.abort(session);
+            session.abort();
             session = null;
         }
     }
