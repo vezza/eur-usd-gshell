@@ -18,6 +18,7 @@ let session;
 let sourceId = null;
 let euroQuotation = null;
 let currentApiIndex = 0;
+let timeoutIds = []; // Array per tracciare tutti i timeout
 
 // Lista di API alternative per il tasso di cambio
 const exchangeApis = [
@@ -93,10 +94,11 @@ async function handle_request_euro_api() {
                     updatePanelText("(API Limit)");
                 } else {
                     // Ritenta immediatamente con la prossima API
-                    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, () => {
+                    const retryId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, () => {
                         handle_request_euro_api();
                         return GLib.SOURCE_REMOVE;
                     });
+                    timeoutIds.push(retryId);
                 }
             }
         });
@@ -105,10 +107,11 @@ async function handle_request_euro_api() {
         updatePanelText("(Network Error)");
         
         // Ritenta dopo 30 secondi
-        GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 30, () => {
+        const retryId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 30, () => {
             handle_request_euro_api();
             return GLib.SOURCE_REMOVE;
         });
+        timeoutIds.push(retryId);
     }
 }
 
@@ -149,9 +152,19 @@ export default class Eurusd {
             handle_request_euro_api();
             return GLib.SOURCE_CONTINUE;
         });
+        timeoutIds.push(sourceId);
     }
 
     disable() {
+        // Rimuovi tutti i timeout
+        timeoutIds.forEach(id => GLib.Source.remove(id));
+        timeoutIds = [];
+        
+        if (sourceId) {
+            GLib.Source.remove(sourceId);
+            sourceId = null;
+        }
+        
         if (panelButton) {
             Main.panel._centerBox.remove_child(panelButton);
             panelButton.destroy();
@@ -161,11 +174,6 @@ export default class Eurusd {
         panelButtonText = null;
         euroQuotation = null;
         currentApiIndex = 0;
-        
-        if (sourceId) {
-            GLib.Source.remove(sourceId);
-            sourceId = null;
-        }
         
         if (session) {
             session.abort();
